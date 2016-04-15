@@ -3,9 +3,9 @@
 import sys
 import os.path
 import json
+import time
 import datetime
 import logging
-import requests
 
 import xmltodict
 import requests
@@ -19,7 +19,8 @@ class eBayAPI(object):
     @staticmethod
     def Trading(auth_token, app_id, cert_id, dev_id):
         return Trading(
-            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
+            auth_token=auth_token, app_id=app_id,
+            cert_id=cert_id, dev_id=dev_id,
             xmlns='urn:ebay:apis:eBLBaseComponents',
             endpoint='https://api.ebay.com/ws/api.dll',
             service=None
@@ -28,7 +29,8 @@ class eBayAPI(object):
     @staticmethod
     def Finding(auth_token, app_id, cert_id, dev_id):
         return Finding(
-            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
+            auth_token=auth_token, app_id=app_id,
+            cert_id=cert_id, dev_id=dev_id,
             xmlns='http://www.ebay.com/marketplace/search/v1/services',
             endpoint='http://svcs.ebay.com/services/search/FindingService/v1',
             service='FindingService'
@@ -36,9 +38,9 @@ class eBayAPI(object):
 
     @staticmethod
     def FileTransfer(auth_token, app_id, cert_id, dev_id):
-        config = Config(self._get_file_path(config_file))
         return FileTransfer(
-            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
+            auth_token=auth_token, app_id=app_id,
+            cert_id=cert_id, dev_id=dev_id,
             xmlns='http://www.ebay.com/marketplace/services',
             endpoint='https://storage.ebay.com/FileTransferService',
             service='FileTransferService'
@@ -46,9 +48,9 @@ class eBayAPI(object):
 
     @staticmethod
     def BulkDataExchange(auth_token, app_id, cert_id, dev_id):
-        config = Config(self._get_file_path(config_file))
         return BulkDataExchange(
-            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
+            auth_token=auth_token, app_id=app_id,
+            cert_id=cert_id, dev_id=dev_id,
             xmlns='http://www.ebay.com/marketplace/services',
             endpoint='https://webservices.ebay.com/BulkDataExchangeService',
             service='BulkDataExchangeService'
@@ -100,16 +102,12 @@ class eBayRequest(object):
         return xmltodict.unparse(xml, pretty=True, indent='  ')
 
     def _handle_errors(self, response):
-        try:
-            ack = response['Ack']
-        except:
-            ack = response['ack']
         if 'Errors' in response:
             errors = response['Errors']
             errors = errors if isinstance(errors, list) else [errors]
         else:
             errors = []
-        
+
         for err in errors:
             level = str(err['SeverityCode'])
             if level == 'Warning':
@@ -132,16 +130,14 @@ class eBayRequest(object):
 
         if stream:
             logger.debug('%s is streaming. This is NOT implemented well yet.',
-                self.method
-            )
+                         self.method)
             response.raw.decode_content = True
             response = response.raw
             return response
         else:
             response = xmltodict.parse(response.text)
             logger.debug('%s Response received:\n%s', self.method,
-                xmltodict.unparse(response, pretty=True, indent='  ')
-            )
+                         xmltodict.unparse(response, pretty=True, indent='  '))
         response = response[self.method + 'Response']
         self._handle_errors(response)
         return response
@@ -228,7 +224,7 @@ class Trading(eBayRequestFactory):
 
     def GetApiAccessRules(self):
         name = 'GetApiAccessRules'
-        return = self.build(name).execute()
+        return self.build(name).execute()
 
     def GetSuggestedCategories(self, Query):
         name = 'GetSuggestedCategories'
@@ -254,7 +250,7 @@ class Trading(eBayRequestFactory):
         name = 'AddItem'
         params = item
         request = self.build(name, params=params, auth=True)
-        verified = self.verifyAddItem(item)
+        verified = self.VerifyAddItem(item)
         ack = verified['Ack']
         if ack == 'Success' or (allow_warnings and ack == 'Warning'):
             return request.execute()
@@ -265,7 +261,7 @@ class Trading(eBayRequestFactory):
         name = 'AddItems'
         params = {'AddItemRequestContainer': []}
         for item in item_array:
-            verified = self.verifyAddItem(item)
+            verified = self.VerifyAddItem(item)
             ack = verified['Ack']
             if ack == 'Success' or (allow_warnings and ack == 'Warning'):
                 item['MessageID'] = item_array.index(item)
@@ -286,7 +282,7 @@ class Trading(eBayRequestFactory):
                 'Quantity': item['Quantity']
             }
         }
-        return self.build(name, params=params).execute()
+        return self.build(name, params=param_item).execute()
 
     def EndItem(self, itemId):
         name = 'EndItem'
@@ -349,12 +345,13 @@ class Trading(eBayRequestFactory):
         name = 'CompleteSale'
         params = {
             'OrderID': OrderID,
-            'Paid' : 'true',
-            'Shipment' : {
-                'ShippedTime': time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                'ShipmentTrackingDetails' : {
-                    'ShipmentTrackingNumber': trackingNum,
-                    'ShippingCarrierUsed': carrier
+            'Paid': 'true',
+            'Shipment': {
+                'ShippedTime': time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                             time.gmtime()),
+                'ShipmentTrackingDetails': {
+                    'ShipmentTrackingNumber': TrackingNumber,
+                    'ShippingCarrierUsed': CarrierUsed
                 }
             }
         }
