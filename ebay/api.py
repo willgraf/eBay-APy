@@ -17,94 +17,48 @@ logger = logging.getLogger(__name__)
 class eBayAPI(object):
 
     @staticmethod
-    def _get_file_path(input_path):
-        return os.path.join(os.path.dirname(__file__), input_path)
-
-    @staticmethod
-    def Trading(config_file='../.config.json'):
-        config = Config(self._get_file_path(config_file))
+    def Trading(auth_token, app_id, cert_id, dev_id):
         return Trading(
-            auth_token=config.token, app_id=config.app_id,
-            cert_id=config.cert_id, dev_id=config.dev_id,
+            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
             xmlns='urn:ebay:apis:eBLBaseComponents',
             endpoint='https://api.ebay.com/ws/api.dll',
             service=None
         )
 
     @staticmethod
-    def Finding(config_file='../.config.json'):
-        config = Config(self._get_file_path(config_file))
+    def Finding(auth_token, app_id, cert_id, dev_id):
         return Finding(
-            auth_token=config.token, app_id=config.app_id,
-            cert_id=config.cert_id, dev_id=config.dev_id,
+            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
             xmlns='http://www.ebay.com/marketplace/search/v1/services',
             endpoint='http://svcs.ebay.com/services/search/FindingService/v1',
             service='FindingService'
         )
 
     @staticmethod
-    def FileTransfer(config_file='../.config.json'):
+    def FileTransfer(auth_token, app_id, cert_id, dev_id):
         config = Config(self._get_file_path(config_file))
         return FileTransfer(
-            auth_token=config.token, app_id=config.app_id,
-            cert_id=config.cert_id, dev_id=config.dev_id,
+            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
             xmlns='http://www.ebay.com/marketplace/services',
             endpoint='https://storage.ebay.com/FileTransferService',
             service='FileTransferService'
         )
 
     @staticmethod
-    def BulkDataExchange(config_file='../.config.json'):
+    def BulkDataExchange(auth_token, app_id, cert_id, dev_id):
         config = Config(self._get_file_path(config_file))
         return BulkDataExchange(
-            auth_token=config.token, app_id=config.app_id,
-            cert_id=config.cert_id, dev_id=config.dev_id,
+            auth_token=auth_token, app_id=app_id, cert_id=cert_id, dev_id=dev_id,
             xmlns='http://www.ebay.com/marketplace/services',
             endpoint='https://webservices.ebay.com/BulkDataExchangeService',
             service='BulkDataExchangeService'
         )
 
 
-class Config(object):
-
-    def __init__(self, config_file):
-        config = self._get_config(config_file)
-        self._token = config['Token'],
-        self._app_id = config['App_ID']
-        self._dev_id = config['Dev_ID']
-        self._cert_id = config['Cert_ID']
-        self._endpoint = config['End_Point']
-
-    def _get_config(self, config_file):
-        try:
-            with open(config_file, 'r') as c:
-                config = json.load(c)
-        except IOError as e:
-            logger.error('%s not found.' % config_file)
-            raise e
-        return config
-
-    @property
-    def token(self):
-        return self._token
-
-    @property
-    def app_id(self):
-        return self._app_id
-
-    @property
-    def dev_id(self):
-        return self._dev_id
-
-    @property
-    def cert_id(self):
-        return self._cert_id
-
-
 class eBayRequest(object):
 
     def __init__(self, auth_token, app_id, cert_id, dev_id,
-                 method, service, xmlns, endpoint, parsexml=True):
+                 method, service, xmlns, endpoint):
         self.endpoint = endpoint
         self.method = method
         self.dev_id = dev_id
@@ -113,7 +67,6 @@ class eBayRequest(object):
         self.auth_token = auth_token
         self.service = service
         self.xmlns = xmlns
-        self.parsexml = parsexml
         self.params = {}
         self.headers = {
             'X-EBAY-API-DETAIL-LEVEL': 0,
@@ -174,14 +127,16 @@ class eBayRequest(object):
                 stream=stream, data=str(self)
             )
         except requests.ConnectionError as e:
-            logger.error('Error executing request: %s', e)
+            logger.error('Error executing %s Request: %s', self.method, e)
             return None
 
-        if stream and not parsexml:
-            logger.debug('Stream is on?  Not sure what we are doing.')
+        if stream:
+            logger.debug('%s is streaming. This is NOT implemented well yet.',
+                self.method
+            )
             response.raw.decode_content = True
             response = response.raw
-        elif parsexml and not stream:
+            return response
         else:
             response = xmltodict.parse(response.text)
             logger.debug('%s Response received:\n%s', self.method,
@@ -308,6 +263,7 @@ class Trading(eBayRequestFactory):
 
     def addItems(self, item_array, allow_warnings):
         name = 'AddItems'
+        container = []
         params = {'AddItemRequestContainer': []}
         for item in item_array:
             verified = self.verifyAddItem(item)
@@ -316,10 +272,8 @@ class Trading(eBayRequestFactory):
                 item['MessageID'] = item_array.index(item)
                 params['AddItemRequestContainer'].append(item)
             else:
-                logger.warning(
-                    '%s was not able to be verified for adding.',
-                    item['Item']['SKU']
-                )
+                logger.warning('%s was not able to be verified for adding.',
+                               item['Item']['SKU'])
 
         return self.build(name, params=params, auth=True).execute()
 
@@ -547,8 +501,7 @@ class FileTransfer(eBayRequestFactory):
                  xmlns, endpoint, service):
         eBayRequestFactory.__init__(
             self, auth_token=auth_token, app_id=app_id, cert_id=cert_id,
-            dev_id=dev_id, xmlns=xmlns, endpoint=endpoint, service=service,
-            parsexml=False
+            dev_id=dev_id, xmlns=xmlns, endpoint=endpoint, service=service
         )
 
     def downloadFile(self, fileReferenceId, taskReferenceId):
