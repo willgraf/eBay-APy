@@ -193,17 +193,17 @@ class Trading(eBayRequestFactory):
         self.ADD_ITEMS_MAX = 5
         self.END_ITEMS_MAX = 10
 
-    def leaveFeedback(self, feedback, itemId, target_user):
+    def LeaveFeedback(self, Feedback, ItemId, TargetUser):
         name = 'LeaveFeedback'
         params = {
-            'CommentText': feedback,
+            'CommentText': Feedback,
             'CommentType': 'Positive',
-            'ItemID': itemId,
-            'TargetUser': target_user
+            'ItemID': ItemId,
+            'TargetUser': TargetUser
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def getItemsAwaitingFeedback(self, PageNumber=1, EntriesPerPage=200):
+    def GetItemsAwaitingFeedback(self, PageNumber=1, EntriesPerPage=200):
         name = 'GetItemsAwaitingFeedback'
         params = {
             'Pagination': {
@@ -213,7 +213,7 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def getMyeBaySelling(self, PageNumber=1, EntriesPerPage=200):
+    def GetMyeBaySelling(self, PageNumber=1, EntriesPerPage=200):
         name = 'GetMyeBaySelling'
         params = {
             'ActiveList': {
@@ -226,31 +226,31 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def getApiAccessRules(self):
+    def GetApiAccessRules(self):
         name = 'GetApiAccessRules'
         return = self.build(name).execute()
 
-    def getSuggestedCategories(self, query):
+    def GetSuggestedCategories(self, Query):
         name = 'GetSuggestedCategories'
-        query = (' '.join(query)) if isinstance(query, list) else query
+        Query = (' '.join(Query)) if isinstance(Query, list) else Query
         params = {
-            'Query': query
+            'Query': Query
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def getItem(self, itemId):
+    def GetItem(self, ItemId):
         name = 'GetItem'
         params = {
-            'ItemID': itemId
+            'ItemID': ItemId
         }
         return self.build(name, params=params).execute()
 
-    def verifyAddItem(self, item):
+    def VerifyAddItem(self, item):
         name = 'VerifyAddItem'
         params = item
         return self.build(name, params=params, auth=True).execute()
 
-    def addItem(self, item, allow_warnings):
+    def AddItem(self, item, allow_warnings):
         name = 'AddItem'
         params = item
         request = self.build(name, params=params, auth=True)
@@ -261,9 +261,8 @@ class Trading(eBayRequestFactory):
         else:
             return verified
 
-    def addItems(self, item_array, allow_warnings):
+    def AddItems(self, item_array, allow_warnings):
         name = 'AddItems'
-        container = []
         params = {'AddItemRequestContainer': []}
         for item in item_array:
             verified = self.verifyAddItem(item)
@@ -277,7 +276,7 @@ class Trading(eBayRequestFactory):
 
         return self.build(name, params=params, auth=True).execute()
 
-    def reviseItem(self, item):
+    def ReviseItem(self, item):
         name = 'ReviseItem'
         param_item = {
             'Item': {
@@ -289,7 +288,7 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params).execute()
 
-    def endItem(self, itemId):
+    def EndItem(self, itemId):
         name = 'EndItem'
         params = {
             'EndingReason': 'NotAvailable',
@@ -297,19 +296,19 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def endItems(self, itemId_array):
+    def EndItems(self, ItemIdArray):
         name = 'EndItems'
         params = {'EndItemRequestContainer': []}
-        for itemId in itemId_array:
+        for ItemId in ItemIdArray:
             container = {
-                'MessageID': itemId_array.index(itemId),
+                'MessageID': ItemIdArray.index(ItemId),
                 'EndingReason': 'NotAvailable',
-                'ItemID': itemId
+                'ItemID': ItemId
             }
             params['EndItemRequestContainer'].append(container)
         return self.build(name, params=params, auth=True).execute()
 
-    def getOrders(self, PageNumber=1, EntriesPerPage=100):
+    def GetOrders(self, PageNumber=1, EntriesPerPage=100):
         name = 'GetOrders'
         time_to = datetime.datetime.now()
         time_from = time_to - datetime.timedelta(hours=30)
@@ -324,7 +323,7 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def getSellerList(self, PageNumber=1, EntriesPerPage=100):
+    def GetSellerList(self, PageNumber=1, EntriesPerPage=100):
         name = 'GetSellerList'
         time_to = datetime.datetime.now()
         time_from = time_to - datetime.timedelta(days=119)
@@ -339,17 +338,17 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def geteBayDetails(self, DetailName):
+    def GeteBayDetails(self, DetailName):
         name = 'GeteBayDetails'
         params = {
             'DetailName': DetailName
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def completeSale(self, orderID, trackingNum, carrier):
+    def CompleteSale(self, OrderID, TrackingNumber, CarrierUsed):
         name = 'CompleteSale'
         params = {
-            'ItemID': orderID,
+            'OrderID': OrderID,
             'Paid' : 'true',
             'Shipment' : {
                 'ShippedTime': time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -361,7 +360,7 @@ class Trading(eBayRequestFactory):
         }
         return self.build(name, params=params, auth=True).execute()
 
-    def reviseInventoryStatus(self, item_array):
+    def ReviseInventoryStatus(self, item_array):
         name = 'ReviseInventoryStatus'
         params = {'InventoryStatus': []}
         for item in item_array:
