@@ -1,8 +1,5 @@
 #!/usr/bin/env
 # -*- coding: utf-8 -*-
-import sys
-import os.path
-import json
 import time
 import datetime
 import logging
@@ -246,7 +243,7 @@ class Trading(eBayRequestFactory):
         params = item
         return self.build(name, params=params, auth=True).execute()
 
-    def AddItem(self, item, allow_warnings):
+    def AddItem(self, item, allow_warnings=True):
         name = 'AddItem'
         params = item
         request = self.build(name, params=params, auth=True)
