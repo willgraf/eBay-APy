@@ -2,6 +2,8 @@
 .config.json
 .vscode
 .DS_Store
+venv/
+evn/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

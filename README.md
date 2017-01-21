@@ -15,3 +15,7 @@ trading = eBayAPI.Trading(auth_token=<YOUR-AUTH-TOKEN>,
 eBay_orders = trading.GetOrders()
 addResponse = trading.AddItem('XMLObject(check documentation)')
 ```
+
+# Unfortunately...
+
+I have not had time to maintain this project.  Anyone looking for a python API for eBay, I will refer to the very well built [Python eBay SDK](https://github.com/timotheus/ebaysdk-python)
